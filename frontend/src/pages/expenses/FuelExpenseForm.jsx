@@ -12,12 +12,8 @@ import { truckService, fuelExpenseService } from '../../services/api';
 const onlyInt = (v) => v.replace(/[^\d]/g, '');
 const onlyDecimal = (v) => v.replace(/[^\d.,-]/g, '');
 
-/**
- * Converte string numérica em número, entendendo:
- *  - "1.234,56" -> 1234.56
- *  - "10.000"   -> 10000
- *  - "1234,56"  -> 1234.56
- *  - "1234.56"  -> 1234.56
+/** Converte string numérica em número, entendendo:
+ *  "1.234,56" -> 1234.56 | "10.000" -> 10000 | "1234,56" -> 1234.56 | "1234.56" -> 1234.56
  */
 const parseLocaleNumber = (v) => {
   if (v == null || v === '') return 0;
@@ -25,17 +21,15 @@ const parseLocaleNumber = (v) => {
   const hasComma = s.includes(',');
   const hasDot = s.includes('.');
   if (hasComma) {
-    // ponto = milhar, vírgula = decimal
-    s = s.replace(/\./g, '').replace(',', '.');
+    s = s.replace(/\./g, '').replace(',', '.'); // ponto = milhar, vírgula = decimal
   } else if (hasDot) {
-    // só ponto: checa se é padrão de milhar (1.234 / 10.000 / 1.234.567)
-    if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
-      s = s.replace(/\./g, '');
-    } // senão, mantém como decimal (1234.56)
+    if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, ''); // só milhar
   }
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
 };
+
+const formatDate = (d) => (d ? new Date(d).toLocaleDateString('pt-BR') : '');
 
 export default function FuelExpenseForm() {
   const { id } = useParams();
@@ -49,11 +43,17 @@ export default function FuelExpenseForm() {
     mileage: '',
     expense_date: new Date().toISOString().split('T')[0],
   });
+
+  const [lastMileage, setLastMileage] = useState(null);
+  const [lastMileageDate, setLastMileageDate] = useState(null);
+  const [loadingMileage, setLoadingMileage] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [loadingScreen, setLoadingScreen] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Carrega caminhões e, se edição, carrega o registro
   useEffect(() => {
     (async () => {
       try {
@@ -79,6 +79,47 @@ export default function FuelExpenseForm() {
       }
     })();
   }, [id, isEdit, navigate, toast]);
+
+  // Busca a ÚLTIMA KM registrada do caminhão selecionado
+  useEffect(() => {
+    const fetchLast = async (truckId) => {
+      if (!truckId) {
+        setLastMileage(null);
+        setLastMileageDate(null);
+        return;
+      }
+      setLoadingMileage(true);
+      try {
+        const res = await fuelExpenseService.getByTruck(truckId);
+        const list = res.data || [];
+        if (!list.length) {
+          setLastMileage(null);
+          setLastMileageDate(null);
+        } else {
+          // pega o mais recente por data; se empatar, por km; se empatar, por id
+          const sorted = [...list].sort((a, b) => {
+            const da = new Date(a.expense_date).getTime();
+            const db = new Date(b.expense_date).getTime();
+            if (db !== da) return db - da;
+            const ma = Number(a.mileage ?? -Infinity);
+            const mb = Number(b.mileage ?? -Infinity);
+            if (mb !== ma) return mb - ma;
+            return Number(b.id ?? 0) - Number(a.id ?? 0);
+          });
+          setLastMileage(sorted[0]?.mileage ?? null);
+          setLastMileageDate(sorted[0]?.expense_date ?? null);
+        }
+      } catch (e) {
+        console.error(e);
+        setLastMileage(null);
+        setLastMileageDate(null);
+      } finally {
+        setLoadingMileage(false);
+      }
+    };
+
+    if (formData.truck_id) fetchLast(formData.truck_id);
+  }, [formData.truck_id]);
 
   const handleInputChange = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
 
@@ -111,6 +152,15 @@ export default function FuelExpenseForm() {
     }
     if (!Number.isInteger(payload.mileage) || payload.mileage < 0) {
       toast({ title: 'Erro', description: 'Quilometragem inválida.', variant: 'destructive' });
+      return;
+    }
+    // validação suave: km não pode ser menor que a última registrada
+    if (lastMileage != null && payload.mileage < Number(lastMileage)) {
+      toast({
+        title: 'Quilometragem inconsistente',
+        description: `A quilometragem informada (${payload.mileage.toLocaleString('pt-BR')} km) é menor que a última registrada (${Number(lastMileage).toLocaleString('pt-BR')} km).`,
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -199,7 +249,16 @@ export default function FuelExpenseForm() {
             </div>
 
             <div className="space-y-2">
-              <Label>Quilometragem *</Label>
+              <div className="flex items-center justify-between">
+                <Label>Quilometragem *</Label>
+                <span className="text-xs text-muted-foreground">
+                  {loadingMileage
+                    ? 'Buscando última km…'
+                    : lastMileage != null
+                      ? <>Última: <strong>{Number(lastMileage).toLocaleString('pt-BR')} km</strong>{lastMileageDate ? ` (${formatDate(lastMileageDate)})` : ''}</>
+                      : 'Sem histórico'}
+                </span>
+              </div>
               <Input
                 type="text"
                 placeholder="123456"
@@ -207,7 +266,17 @@ export default function FuelExpenseForm() {
                 onChange={(e) => handleInputChange('mileage', onlyInt(e.target.value))}
                 required
               />
-              <p className="text-sm text-muted-foreground">Quilometragem atual do caminhão</p>
+              {lastMileage != null && (
+                <div className="text-xs text-muted-foreground">
+                  <button
+                    type="button"
+                    className="underline underline-offset-2"
+                    onClick={() => handleInputChange('mileage', String(lastMileage))}
+                  >
+                    Usar última quilometragem
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -223,7 +292,7 @@ export default function FuelExpenseForm() {
             {formData.liters && formData.price_per_liter ? (
               <div className="p-3 bg-muted rounded-md">
                 <p className="text-sm font-medium">
-                  Total:{' '}
+                  Total{' '}
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
                     .format(calculateTotal())}
                 </p>

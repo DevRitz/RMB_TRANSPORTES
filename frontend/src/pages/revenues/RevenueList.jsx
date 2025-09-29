@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, RefreshCcw, XCircle, Pen } from 'lucide-react';
+import { Plus, Edit, Trash2, RefreshCcw, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -46,7 +46,7 @@ const parseMoney = (v) => {
   return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
 };
 
-// Heurística de normalização: se vier inteiro e múltiplo de 100 (centavos), divide por 100
+// Heurística: se vier inteiro e múltiplo de 100 (centavos), divide por 100
 const normalizeAmountForDisplay = (v) => {
   const num = parseMoney(v);
   if (!Number.isInteger(num)) return num;
@@ -261,7 +261,7 @@ const RevenueList = () => {
           {filteredRevenues.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
-                Nenhuma receita encontrada com os filtros atuais.
+                Nenhuma receita encontrado com os filtros atuais.
               </p>
             </div>
           ) : (

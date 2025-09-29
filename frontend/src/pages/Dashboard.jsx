@@ -61,9 +61,9 @@ const Dashboard = () => {
 
   const quickActions = [
     {
-      title: 'Cadastrar Caminhão',
-      description: 'Adicionar novo veículo à frota',
-      href: '/trucks/new',
+      title: 'Caminhões',
+      description: 'Ver veiculos da sua frota',
+      href: '/trucks',
       icon: Truck,
       color: 'bg-blue-500',
     },

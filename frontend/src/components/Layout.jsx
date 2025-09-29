@@ -46,6 +46,9 @@ const Layout = ({ children }) => {
 
         // Manutenção
         { name: 'Registrar Manutenção', href: '/expenses/maintenance/new', icon: Wrench },
+
+        // Outras despesas
+        { name: 'Registrar Outras Despesas', href: '/expenses/other/new', icon: Receipt },
       ],
     },
     { name: 'Relatórios', href: '/reports', icon: BarChart3 },

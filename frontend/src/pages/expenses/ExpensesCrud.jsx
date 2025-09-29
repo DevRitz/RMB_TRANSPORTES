@@ -23,7 +23,8 @@ import {
   truckService,
   fuelExpenseService,
   driverExpenseService,
-  maintenanceExpenseService
+  maintenanceExpenseService,
+  otherExpenseService
 } from '../../services/api';
 
 const months = [
@@ -55,17 +56,24 @@ const getYMD = (row) => {
   return { y: d.getFullYear(), m: d.getMonth() + 1 };
 };
 
-// Normalizações CONSISTENTES (API retorna ×100):
+// Normalizações CONSISTENTES (API retorna ×100 para despesas de frota):
 const normMoney = (amount) => toNumber(amount) / 100;          // centavos -> reais
 const normLiters = (liters) => toNumber(liters) / 100;         // centilitros -> litros
 const normPricePerLiter = (p) => toNumber(p) / 100;            // centavos -> reais
 
 export default function ExpensesCrud() {
-  const [active, setActive] = useState('fuel'); // 'fuel' | 'driver' | 'maintenance'
+  const [active, setActive] = useState('fuel'); // 'fuel' | 'driver' | 'maintenance' | 'other'
   const [trucks, setTrucks] = useState([]);
   const [fuel, setFuel] = useState([]);
   const [driver, setDriver] = useState([]);
   const [maint, setMaint] = useState([]);
+
+  // Outras Despesas (não tem caminhão)
+  const [others, setOthers] = useState([]);
+  const [otherCats, setOtherCats] = useState([]);
+  const [selectedOtherCat, setSelectedOtherCat] = useState('ALL');
+  const [loadingOther, setLoadingOther] = useState(false);
+
   const [loading, setLoading] = useState(true);
 
   const [truckFilter, setTruckFilter] = useState('ALL');
@@ -87,6 +95,8 @@ export default function ExpensesCrud() {
       setFuel(f.data || []);
       setDriver(d.data || []);
       setMaint(m.data || []);
+      // carrega Outras Despesas do período atual:
+      await fetchOtherByPeriod(year, month);
     } catch (e) {
       console.error(e);
       toast({ title: 'Erro', description: 'Falha ao carregar despesas/caminhões.', variant: 'destructive' });
@@ -95,17 +105,39 @@ export default function ExpensesCrud() {
     }
   };
 
+  const fetchOtherByPeriod = async (y, m) => {
+    try {
+      setLoadingOther(true);
+      const res = await otherExpenseService.getByPeriod(y, m);
+      const rows = res?.data ?? [];
+      setOthers(rows);
+      const cats = Array.from(new Set(rows.map(r => r.category).filter(Boolean))).sort();
+      setOtherCats(cats);
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Erro', description: 'Falha ao carregar Outras Despesas.', variant: 'destructive' });
+    } finally {
+      setLoadingOther(false);
+    }
+  };
+
   useEffect(() => {
     fetchAll();
   }, []);
+
+  // sempre que período mudar, recarrega Outras Despesas
+  useEffect(() => {
+    fetchOtherByPeriod(year, month);
+  }, [year, month]);
 
   const clearFilters = () => {
     setTruckFilter('ALL');
     setYear(String(new Date().getFullYear()));
     setMonth(String(new Date().getMonth() + 1));
+    setSelectedOtherCat('ALL');
   };
 
-  // ---- filtros
+  // ---- filtros (frota)
   const fuelFiltered = useMemo(() => {
     return fuel.filter((r) => {
       const { y, m } = getYMD(r);
@@ -129,6 +161,18 @@ export default function ExpensesCrud() {
       return byTruck && String(y) === year && String(m) === month;
     });
   }, [maint, truckFilter, year, month]);
+
+  // ---- filtro (outras despesas) – ignora caminhão
+  const othersFiltered = useMemo(() => {
+    const rows = others || [];
+    if (selectedOtherCat === 'ALL') return rows;
+    return rows.filter((o) => String(o.category) === String(selectedOtherCat));
+  }, [others, selectedOtherCat]);
+
+ const othersTotals = useMemo(() => {
+   const total = (othersFiltered || []).reduce((acc, r) => acc + normMoney(r.amount), 0); // centavos -> reais
+   return { total, count: othersFiltered.length };
+ }, [othersFiltered]);
 
   // ---- deletes
   const delFuel = async (id) => {
@@ -154,6 +198,15 @@ export default function ExpensesCrud() {
       await maintenanceExpenseService.delete(id);
       toast({ title: 'Sucesso', description: 'Despesa de manutenção excluída.' });
       fetchAll();
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível excluir.', variant: 'destructive' });
+    }
+  };
+  const delOther = async (id) => {
+    try {
+      await otherExpenseService.delete(id);
+      toast({ title: 'Sucesso', description: 'Despesa excluída.' });
+      fetchOtherByPeriod(year, month);
     } catch {
       toast({ title: 'Erro', description: 'Não foi possível excluir.', variant: 'destructive' });
     }
@@ -234,6 +287,7 @@ export default function ExpensesCrud() {
           <TabsTrigger value="fuel">Combustível</TabsTrigger>
           <TabsTrigger value="driver">Motorista</TabsTrigger>
           <TabsTrigger value="maintenance">Manutenção</TabsTrigger>
+          <TabsTrigger value="other">Outras Despesas</TabsTrigger>
         </TabsList>
 
         {/* Combustível */}
@@ -433,6 +487,107 @@ export default function ExpensesCrud() {
                       </TableRow>
                     );
                   })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Outras Despesas */}
+        <TabsContent value="other">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Outras Despesas</CardTitle>
+                <CardDescription>
+                  {loadingOther ? 'Carregando…' : `${othersFiltered.length} registro(s) • Total: ${formatCurrency(othersTotals.total)}`}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => fetchOtherByPeriod(year, month)}>
+                  <RefreshCcw className="h-4 w-4 mr-2" /> Atualizar
+                </Button>
+                <Button asChild>
+                  <Link to="/expenses/other/new">
+                    <Plus className="h-4 w-4 mr-2" /> Nova
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Filtro de categoria (ignora caminhão) */}
+              <div className="grid gap-4 md:grid-cols-3 mb-4">
+                <div className="space-y-2">
+                  <Label>Categoria</Label>
+                  <Select value={selectedOtherCat} onValueChange={setSelectedOtherCat}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todas</SelectItem>
+                      {otherCats.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Total (após filtro)</Label>
+                  <div className="h-10 flex items-center font-semibold">
+                    {formatCurrency(othersTotals.total)}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Registros</Label>
+                  <div className="h-10 flex items-center font-semibold">
+                    {othersTotals.count}
+                  </div>
+                </div>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Fornecedor</TableHead>
+                    <TableHead>Documento</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {othersFiltered.map((exp) => (
+                    <TableRow key={exp.id}>
+                      <TableCell>{formatDate(exp.expense_date)}</TableCell>
+                      <TableCell className="font-medium">{exp.category}</TableCell>
+                      <TableCell>{exp.supplier || '-'}</TableCell>
+                      <TableCell>{exp.document || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{exp.description || '-'}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(normMoney(exp.amount))}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" asChild>
+                            <Link to={`/expenses/other/edit/${exp.id}`}><Edit className="h-4 w-4" /></Link>
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="outline"><Trash2 className="h-4 w-4" /></Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir despesa</AlertDialogTitle>
+                                <AlertDialogDescription>Essa ação não pode ser desfeita.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => delOther(exp.id)}>Excluir</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>

@@ -10,7 +10,10 @@ import RevenueList from './pages/revenues/RevenueList';
 import FuelExpenseForm from './pages/expenses/FuelExpenseForm';
 import DriverExpenseForm from './pages/expenses/DriverExpenseForm';
 import MaintenanceExpenseForm from './pages/expenses/MaintenanceExpenseForm';
+import OtherExpenses from './pages/expenses/OtherExpenses';
 import ExpensesCrud from './pages/expenses/ExpensesCrud'; // <<< NOVO
+import OtherExpenseForm from './pages/expenses/OtherExpenseForm';
+
 import Reports from './pages/reports/Reports';
 import './App.css';
 
@@ -38,10 +41,13 @@ function App() {
             <Route path="/expenses/fuel/new" element={<FuelExpenseForm />} />
             <Route path="/expenses/driver/new" element={<DriverExpenseForm />} />
             <Route path="/expenses/maintenance/new" element={<MaintenanceExpenseForm />} />
+            <Route path="/expenses/other/new" element={<OtherExpenses />} />
+            <Route path="/expenses/other/edit/:id" element={<OtherExpenseForm />} />
             {/* Rotas de edição por tipo (usando os mesmos forms) */}
             <Route path="/expenses/fuel/edit/:id" element={<FuelExpenseForm />} /> {/* <<< NOVO */}
             <Route path="/expenses/driver/edit/:id" element={<DriverExpenseForm />} /> {/* <<< NOVO */}
             <Route path="/expenses/maintenance/edit/:id" element={<MaintenanceExpenseForm />} /> {/* <<< NOVO */}
+
 
             {/* Relatórios */}
             <Route path="/reports" element={<Reports />} />
