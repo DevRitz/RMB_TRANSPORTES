@@ -19,6 +19,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { revenueService, truckService } from '../../services/api';
+import { formatDate, getYearMonth } from '@/lib/dateUtils';
 
 const months = [
   { value: '1', label: 'Janeiro' },
@@ -59,20 +60,10 @@ const formatCurrency = (v) =>
     normalizeAmountForDisplay(v)
   );
 
-const formatDate = (dateLike) => {
-  if (!dateLike) return '-';
-  const d = new Date(dateLike);
-  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR');
-};
-
 // Extrai ano/mês de revenue_date (preferido) ou fallback para Date
-const getYearMonth = (rev) => {
+const getRevenueYearMonth = (rev) => {
   const src = rev.revenue_date || rev.date || rev.created_at || null;
-  if (typeof src === 'string' && /^\d{4}-\d{2}-\d{2}/.test(src)) {
-    return { year: Number(src.slice(0, 4)), month: Number(src.slice(5, 7)) };
-  }
-  const d = new Date(src);
-  return { year: d.getFullYear(), month: d.getMonth() + 1 };
+  return getYearMonth(src);
 };
 
 const RevenueList = () => {
@@ -135,7 +126,7 @@ const RevenueList = () => {
         String(rev.truck_id) === String(selectedTruck);
 
       // filtro período
-      const { year, month } = getYearMonth(rev);
+      const { year, month } = getRevenueYearMonth(rev);
       const matchYear = String(year) === String(selectedYear);
       const matchMonth = String(month) === String(selectedMonth);
 

@@ -14,6 +14,7 @@ import {
   maintenanceExpenseService,
   reportService 
 } from '../../services/api';
+import { formatDate } from '@/lib/dateUtils';
 
 const TruckDetails = () => {
   const [truck, setTruck] = useState(null);
@@ -70,8 +71,6 @@ const TruckDetails = () => {
 
   const formatCurrency = (value) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
-
-  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('pt-BR');
   const fmt = (v, d = 2) =>
     Number(v ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
   const formatKm = (v) =>

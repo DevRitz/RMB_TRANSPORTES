@@ -26,6 +26,7 @@ import {
   maintenanceExpenseService,
   otherExpenseService
 } from '../../services/api';
+import { formatDate, getYearMonth } from '@/lib/dateUtils';
 
 const months = [
   { value: '1', label: 'Janeiro' }, { value: '2', label: 'Fevereiro' },
@@ -45,15 +46,9 @@ const toNumber = (v) => {
 };
 const formatCurrency = (v) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(toNumber(v));
-const formatDate = (dLike) => {
-  if (!dLike) return '-';
-  const d = new Date(dLike);
-  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR');
-};
-const getYMD = (row) => {
+const getExpenseYearMonth = (row) => {
   const src = row.expense_date || row.created_at || null;
-  const d = new Date(src);
-  return { y: d.getFullYear(), m: d.getMonth() + 1 };
+  return getYearMonth(src);
 };
 
 // Normalizações CONSISTENTES (API retorna ×100 para despesas de frota):
@@ -140,7 +135,7 @@ export default function ExpensesCrud() {
   // ---- filtros (frota)
   const fuelFiltered = useMemo(() => {
     return fuel.filter((r) => {
-      const { y, m } = getYMD(r);
+      const { year: y, month: m } = getExpenseYearMonth(r);
       const byTruck = truckFilter === 'ALL' || String(r.truck_id) === String(truckFilter);
       return byTruck && String(y) === year && String(m) === month;
     });
@@ -148,7 +143,7 @@ export default function ExpensesCrud() {
 
   const driverFiltered = useMemo(() => {
     return driver.filter((r) => {
-      const { y, m } = getYMD(r);
+      const { year: y, month: m } = getExpenseYearMonth(r);
       const byTruck = truckFilter === 'ALL' || String(r.truck_id) === String(truckFilter);
       return byTruck && String(y) === year && String(m) === month;
     });
@@ -156,7 +151,7 @@ export default function ExpensesCrud() {
 
   const maintFiltered = useMemo(() => {
     return maint.filter((r) => {
-      const { y, m } = getYMD(r);
+      const { year: y, month: m } = getExpenseYearMonth(r);
       const byTruck = truckFilter === 'ALL' || String(r.truck_id) === String(truckFilter);
       return byTruck && String(y) === year && String(m) === month;
     });
