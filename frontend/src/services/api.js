@@ -1,24 +1,8 @@
 // src/services/api.js
 import axios from 'axios';
 
-// Base da API:
-// - Produção: "/api" (Nginx faz proxy)
-// - Dev local: "http://localhost:5000/api"
-// - Pode ser sobrescrito via VITE_API_BASE em .env.*
-let API_BASE = '/api';
-
-// Detecta dev local no navegador
-if (typeof window !== 'undefined') {
-  const isLocal =
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1';
-  if (isLocal) API_BASE = 'http://localhost:5000/api';
-}
-
-// Override via Vite (.env.production / .env.development)
-if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) {
-  API_BASE = import.meta.env.VITE_API_BASE;
-}
+// Usa variável de ambiente ou "/api" por padrão (Nginx faz proxy)
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Instância Axios
 const api = axios.create({
