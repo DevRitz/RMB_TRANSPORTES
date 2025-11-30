@@ -10,7 +10,7 @@ const toNumber = (value) => {
 };
 
 // Criar
-exports.createRevenue = (req, res) => {
+exports.createRevenue = async (req, res) => {
   const { truck_id, amount, description, revenue_date } = req.body;
 
   if (!truck_id || amount == null || !revenue_date) {
@@ -22,55 +22,56 @@ exports.createRevenue = (req, res) => {
     return res.status(400).json({ error: 'Valor inválido' });
   }
 
-  Revenue.create(truck_id, amountNum, description ?? null, revenue_date, (err, result) => {
-    if (err) {
-      console.error('Erro ao criar receita:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const result = await Revenue.create(truck_id, amountNum, description ?? null, revenue_date);
     res.status(201).json({ message: 'Receita criada com sucesso', id: result.insertId });
-  });
+  } catch (err) {
+    console.error('Erro ao criar receita:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Listar por caminhão
-exports.getRevenuesByTruck = (req, res) => {
+exports.getRevenuesByTruck = async (req, res) => {
   const { truck_id } = req.params;
-  Revenue.findByTruckId(truck_id, (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar receitas:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  
+  try {
+    const results = await Revenue.findByTruckId(truck_id);
     res.json(results);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar receitas:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Listar todas
-exports.getAllRevenues = (req, res) => {
-  Revenue.findAll((err, results) => {
-    if (err) {
-      console.error('Erro ao buscar receitas:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+exports.getAllRevenues = async (req, res) => {
+  try {
+    const results = await Revenue.findAll();
     res.json(results);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar receitas:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Buscar por ID
-exports.getRevenueById = (req, res) => {
+exports.getRevenueById = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'id inválido' });
 
-  Revenue.findById(id, (err, rows) => {
-    if (err) {
-      console.error('Erro ao buscar receita:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const rows = await Revenue.findById(id);
     if (!rows || rows.length === 0) return res.status(404).json({ error: 'Não encontrada' });
     res.json(rows[0]);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar receita:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Atualizar
-exports.updateRevenue = (req, res) => {
+exports.updateRevenue = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { truck_id, amount, description, revenue_date } = req.body;
 
@@ -84,28 +85,28 @@ exports.updateRevenue = (req, res) => {
     return res.status(400).json({ error: 'Valor inválido' });
   }
 
-  Revenue.updateById(id, { truck_id, amount: amountNum, description, revenue_date }, (err) => {
-    if (err) {
-      console.error('Erro ao atualizar receita:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    await Revenue.updateById(id, { truck_id, amount: amountNum, description, revenue_date });
     res.json({ message: 'Receita atualizada com sucesso' });
-  });
+  } catch (err) {
+    console.error('Erro ao atualizar receita:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Excluir
-exports.deleteRevenue = (req, res) => {
+exports.deleteRevenue = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'id inválido' });
 
-  Revenue.deleteById(id, (err, result) => {
-    if (err) {
-      console.error('Erro ao excluir receita:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const result = await Revenue.deleteById(id);
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Registro não encontrado' });
     }
     res.json({ message: 'Receita excluída com sucesso' });
-  });
+  } catch (err) {
+    console.error('Erro ao excluir receita:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };

@@ -8,26 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { truckService, fuelExpenseService } from '../../services/api';
+import { currencyMask, parseCurrency, toMaskedInput } from '@/lib/utils';
 
 const onlyInt = (v) => v.replace(/[^\d]/g, '');
-const onlyDecimal = (v) => v.replace(/[^\d.,-]/g, '');
-
-/** Converte string numérica em número, entendendo:
- *  "1.234,56" -> 1234.56 | "10.000" -> 10000 | "1234,56" -> 1234.56 | "1234.56" -> 1234.56
- */
-const parseLocaleNumber = (v) => {
-  if (v == null || v === '') return 0;
-  let s = String(v).trim();
-  const hasComma = s.includes(',');
-  const hasDot = s.includes('.');
-  if (hasComma) {
-    s = s.replace(/\./g, '').replace(',', '.'); // ponto = milhar, vírgula = decimal
-  } else if (hasDot) {
-    if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, ''); // só milhar
-  }
-  const n = parseFloat(s);
-  return Number.isFinite(n) ? n : 0;
-};
 
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString('pt-BR') : '');
 
@@ -64,8 +47,8 @@ export default function FuelExpenseForm() {
           const { data } = await fuelExpenseService.getById(id);
           setFormData({
             truck_id: String(data.truck_id ?? ''),
-            liters: String(data.liters ?? ''),
-            price_per_liter: String(data.price_per_liter ?? ''),
+            liters: toMaskedInput(data.liters),
+            price_per_liter: toMaskedInput(data.price_per_liter),
             mileage: String(data.mileage ?? ''),
             expense_date: (data.expense_date || '').slice(0, 10),
           });
@@ -124,7 +107,7 @@ export default function FuelExpenseForm() {
   const handleInputChange = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
 
   const calculateTotal = () =>
-    parseLocaleNumber(formData.liters) * parseLocaleNumber(formData.price_per_liter);
+    parseCurrency(formData.liters) * parseCurrency(formData.price_per_liter);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -136,8 +119,8 @@ export default function FuelExpenseForm() {
 
     const payload = {
       truck_id: parseInt(formData.truck_id, 10),
-      liters: parseLocaleNumber(formData.liters),
-      price_per_liter: parseLocaleNumber(formData.price_per_liter),
+      liters: parseCurrency(formData.liters),
+      price_per_liter: parseCurrency(formData.price_per_liter),
       mileage: parseInt(formData.mileage, 10),
       expense_date: formData.expense_date,
     };
@@ -152,15 +135,6 @@ export default function FuelExpenseForm() {
     }
     if (!Number.isInteger(payload.mileage) || payload.mileage < 0) {
       toast({ title: 'Erro', description: 'Quilometragem inválida.', variant: 'destructive' });
-      return;
-    }
-    // validação suave: km não pode ser menor que a última registrada
-    if (lastMileage != null && payload.mileage < Number(lastMileage)) {
-      toast({
-        title: 'Quilometragem inconsistente',
-        description: `A quilometragem informada (${payload.mileage.toLocaleString('pt-BR')} km) é menor que a última registrada (${Number(lastMileage).toLocaleString('pt-BR')} km).`,
-        variant: 'destructive',
-      });
       return;
     }
 
@@ -232,9 +206,12 @@ export default function FuelExpenseForm() {
                 type="text"
                 placeholder="0,00"
                 value={formData.liters}
-                onChange={(e) => handleInputChange('liters', onlyDecimal(e.target.value))}
+                onChange={(e) => handleInputChange('liters', currencyMask(e.target.value))}
                 required
               />
+              <p className="text-sm text-muted-foreground">
+                Ex: digite 10345 para 103,45 litros
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -243,9 +220,12 @@ export default function FuelExpenseForm() {
                 type="text"
                 placeholder="0,00"
                 value={formData.price_per_liter}
-                onChange={(e) => handleInputChange('price_per_liter', onlyDecimal(e.target.value))}
+                onChange={(e) => handleInputChange('price_per_liter', currencyMask(e.target.value))}
                 required
               />
+              <p className="text-sm text-muted-foreground">
+                Ex: digite 575 para R$ 5,75
+              </p>
             </div>
 
             <div className="space-y-2">

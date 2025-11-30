@@ -4,7 +4,7 @@ const db = require('../config/database');
 /**
  * Resumo mensal geral (um registro por caminhão no período)
  */
-exports.getGeneralMonthlySummary = (year, month, cb) => {
+exports.getGeneralMonthlySummary = async (year, month) => {
   const sql = `
     SELECT
       t.id,
@@ -49,13 +49,14 @@ exports.getGeneralMonthlySummary = (year, month, cb) => {
     ORDER BY t.plate
   `;
   const params = [year, month, year, month, year, month, year, month];
-  db.query(sql, params, cb);
+  const [rows] = await db.execute(sql, params);
+  return rows;
 };
 
 /**
  * Resumo mensal de UM caminhão (no período)
  */
-exports.getMonthlyTruckSummary = (truckId, year, month, cb) => {
+exports.getMonthlyTruckSummary = async (truckId, year, month) => {
   const sql = `
     SELECT
       t.id,
@@ -102,13 +103,14 @@ exports.getMonthlyTruckSummary = (truckId, year, month, cb) => {
     truckId, year, month,
     truckId,
   ];
-  db.query(sql, params, cb);
+  const [rows] = await db.execute(sql, params);
+  return rows;
 };
 
 /**
  * Balanço TOTAL do caminhão (todo o histórico)
  */
-exports.getTruckBalance = (truckId, cb) => {
+exports.getTruckBalance = async (truckId) => {
   const sql = `
     SELECT
       t.id,
@@ -149,13 +151,14 @@ exports.getTruckBalance = (truckId, cb) => {
     WHERE t.id = ?
   `;
   const params = [truckId, truckId, truckId, truckId, truckId];
-  db.query(sql, params, cb);
+  const [rows] = await db.execute(sql, params);
+  return rows;
 };
 
 /**
  * Total gasto com motoristas no período (para o card da aba Despesas)
  */
-exports.getDriverExpensesTotal = (year, month, cb) => {
+exports.getDriverExpensesTotal = async (year, month) => {
   const sql = `
     SELECT
       COALESCE(SUM(amount), 0) AS total_driver_expenses,
@@ -163,5 +166,6 @@ exports.getDriverExpensesTotal = (year, month, cb) => {
     FROM driver_expenses
     WHERE YEAR(expense_date) = ? AND MONTH(expense_date) = ?
   `;
-  db.query(sql, [year, month], cb);
+  const [rows] = await db.execute(sql, [year, month]);
+  return rows;
 };

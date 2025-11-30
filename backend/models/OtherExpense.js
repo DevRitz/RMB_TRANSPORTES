@@ -14,60 +14,66 @@ const toNumber = (v) => {
 };
 
 const OtherExpense = {
-  create(category, supplier, document, amount, expense_date, description, cb) {
+  async create(category, supplier, document, amount, expense_date, description) {
     const sql = `
       INSERT INTO other_expenses (category, supplier, document, amount, expense_date, description)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
-    db.query(sql, [category, supplier, document, amount, expense_date, description], cb);
+    const [result] = await db.execute(sql, [category, supplier, document, amount, expense_date, description]);
+    return result;
   },
 
-  findAll(cb) {
+  async findAll() {
     const sql = `
       SELECT id, category, supplier, document, amount, expense_date, description, created_at, updated_at
       FROM other_expenses
       ORDER BY expense_date DESC, id DESC
     `;
-    db.query(sql, cb);
+    const [rows] = await db.execute(sql);
+    return rows;
   },
 
-  findById(id, cb) {
+  async findById(id) {
     const sql = `
       SELECT id, category, supplier, document, amount, expense_date, description, created_at, updated_at
       FROM other_expenses
       WHERE id = ?
       LIMIT 1
     `;
-    db.query(sql, [id], cb);
+    const [rows] = await db.execute(sql, [id]);
+    return rows;
   },
 
   // Filtro por período (YYYY, M)
-  findByPeriod(year, month, cb) {
+  async findByPeriod(year, month) {
     const sql = `
       SELECT id, category, supplier, document, amount, expense_date, description, created_at, updated_at
       FROM other_expenses
       WHERE YEAR(expense_date) = ? AND MONTH(expense_date) = ?
       ORDER BY expense_date ASC, id ASC
     `;
-    db.query(sql, [year, month], cb);
+    const [rows] = await db.execute(sql, [year, month]);
+    return rows;
   },
 
-  updateById(id, category, supplier, document, amount, expense_date, description, cb) {
+  async updateById(id, category, supplier, document, amount, expense_date, description) {
     const sql = `
       UPDATE other_expenses
       SET category = ?, supplier = ?, document = ?, amount = ?, expense_date = ?, description = ?
       WHERE id = ?
     `;
-    db.query(sql, [category, supplier, document, amount, expense_date, description, id], cb);
+    const [result] = await db.execute(sql, [category, supplier, document, amount, expense_date, description, id]);
+    return result;
   },
 
-  deleteById(id, cb) {
+  async deleteById(id) {
     const sql = `DELETE FROM other_expenses WHERE id = ?`;
-    db.query(sql, [id], cb);
+    const [result] = await db.execute(sql, [id]);
+    return result;
   },
 
   // Totalizador por período (útil para relatórios)
-  sumByPeriod(year, month, cb) {
+  async sumByPeriod(year, month) {
     const sql = `
       SELECT 
         COALESCE(SUM(amount), 0) AS total_other_expenses,
@@ -75,11 +81,12 @@ const OtherExpense = {
       FROM other_expenses
       WHERE YEAR(expense_date) = ? AND MONTH(expense_date) = ?
     `;
-    db.query(sql, [year, month], cb);
+    const [rows] = await db.execute(sql, [year, month]);
+    return rows;
   },
 
   // (Opcional) total por categoria em um período
-  sumByCategory(year, month, cb) {
+  async sumByCategory(year, month) {
     const sql = `
       SELECT category, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS records
       FROM other_expenses
@@ -87,7 +94,8 @@ const OtherExpense = {
       GROUP BY category
       ORDER BY total DESC
     `;
-    db.query(sql, [year, month], cb);
+    const [rows] = await db.execute(sql, [year, month]);
+    return rows;
   },
 
   // Expor helper (se quiser reutilizar em controller)

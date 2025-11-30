@@ -1,6 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from './contexts/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import TruckList from './pages/trucks/TruckList';
 import TruckForm from './pages/trucks/TruckForm';
@@ -11,51 +14,163 @@ import FuelExpenseForm from './pages/expenses/FuelExpenseForm';
 import DriverExpenseForm from './pages/expenses/DriverExpenseForm';
 import MaintenanceExpenseForm from './pages/expenses/MaintenanceExpenseForm';
 import OtherExpenses from './pages/expenses/OtherExpenses';
-import ExpensesCrud from './pages/expenses/ExpensesCrud'; // <<< NOVO
+import ExpensesCrud from './pages/expenses/ExpensesCrud';
 import OtherExpenseForm from './pages/expenses/OtherExpenseForm';
-
 import Reports from './pages/reports/Reports';
 import './App.css';
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-background">
-        <Layout>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-background">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            {/* Rota de login (pública) */}
+            <Route path="/login" element={<Login />} />
+            
+            {/* Redirect da raiz para dashboard */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            
+            {/* Rotas protegidas */}
+            <Route path="/dashboard" element={
+              <PrivateRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </PrivateRoute>
+            } />
 
             {/* Caminhões */}
-            <Route path="/trucks" element={<TruckList />} />
-            <Route path="/trucks/new" element={<TruckForm />} />
-            <Route path="/trucks/edit/:id" element={<TruckForm />} />
-            <Route path="/trucks/:id" element={<TruckDetails />} />
+            <Route path="/trucks" element={
+              <PrivateRoute>
+                <Layout>
+                  <TruckList />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/trucks/new" element={
+              <PrivateRoute>
+                <Layout>
+                  <TruckForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/trucks/edit/:id" element={
+              <PrivateRoute>
+                <Layout>
+                  <TruckForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/trucks/:id" element={
+              <PrivateRoute>
+                <Layout>
+                  <TruckDetails />
+                </Layout>
+              </PrivateRoute>
+            } />
 
             {/* Receitas */}
-            <Route path="/revenues/list" element={<RevenueList />} />
-            <Route path="/revenues/new" element={<RevenueForm />} />
-            <Route path="/revenues/edit/:id" element={<RevenueForm />} />
+            <Route path="/revenues/list" element={
+              <PrivateRoute>
+                <Layout>
+                  <RevenueList />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/revenues/new" element={
+              <PrivateRoute>
+                <Layout>
+                  <RevenueForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/revenues/edit/:id" element={
+              <PrivateRoute>
+                <Layout>
+                  <RevenueForm />
+                </Layout>
+              </PrivateRoute>
+            } />
 
             {/* Despesas */}
-            <Route path="/expenses/manage" element={<ExpensesCrud />} /> {/* <<< NOVO */}
-            <Route path="/expenses/fuel/new" element={<FuelExpenseForm />} />
-            <Route path="/expenses/driver/new" element={<DriverExpenseForm />} />
-            <Route path="/expenses/maintenance/new" element={<MaintenanceExpenseForm />} />
-            <Route path="/expenses/other/new" element={<OtherExpenses />} />
-            <Route path="/expenses/other/edit/:id" element={<OtherExpenseForm />} />
-            {/* Rotas de edição por tipo (usando os mesmos forms) */}
-            <Route path="/expenses/fuel/edit/:id" element={<FuelExpenseForm />} /> {/* <<< NOVO */}
-            <Route path="/expenses/driver/edit/:id" element={<DriverExpenseForm />} /> {/* <<< NOVO */}
-            <Route path="/expenses/maintenance/edit/:id" element={<MaintenanceExpenseForm />} /> {/* <<< NOVO */}
-
+            <Route path="/expenses/manage" element={
+              <PrivateRoute>
+                <Layout>
+                  <ExpensesCrud />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/expenses/fuel/new" element={
+              <PrivateRoute>
+                <Layout>
+                  <FuelExpenseForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/expenses/driver/new" element={
+              <PrivateRoute>
+                <Layout>
+                  <DriverExpenseForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/expenses/maintenance/new" element={
+              <PrivateRoute>
+                <Layout>
+                  <MaintenanceExpenseForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/expenses/other/new" element={
+              <PrivateRoute>
+                <Layout>
+                  <OtherExpenses />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/expenses/other/edit/:id" element={
+              <PrivateRoute>
+                <Layout>
+                  <OtherExpenseForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/expenses/fuel/edit/:id" element={
+              <PrivateRoute>
+                <Layout>
+                  <FuelExpenseForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/expenses/driver/edit/:id" element={
+              <PrivateRoute>
+                <Layout>
+                  <DriverExpenseForm />
+                </Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/expenses/maintenance/edit/:id" element={
+              <PrivateRoute>
+                <Layout>
+                  <MaintenanceExpenseForm />
+                </Layout>
+              </PrivateRoute>
+            } />
 
             {/* Relatórios */}
-            <Route path="/reports" element={<Reports />} />
+            <Route path="/reports" element={
+              <PrivateRoute>
+                <Layout>
+                  <Reports />
+                </Layout>
+              </PrivateRoute>
+            } />
           </Routes>
-        </Layout>
-        <Toaster />
-      </div>
-    </Router>
+          <Toaster />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

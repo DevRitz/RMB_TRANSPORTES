@@ -9,22 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { otherExpenseService } from '../../services/api';
-
-const onlyDecimal = (v) => v.replace(/[^\d.,-]/g, '');
-const parseLocaleNumber = (v) => {
-  if (v == null || v === '') return 0;
-  let s = String(v).trim();
-  const hasComma = s.includes(',');
-  const hasDot = s.includes('.');
-  if (hasComma) {
-    s = s.replace(/\./g, '').replace(',', '.');
-  } else if (hasDot) {
-    // padrão milhar 1.234.567
-    if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
-  }
-  const n = parseFloat(s);
-  return Number.isFinite(n) ? n : 0;
-};
+import { currencyMask, parseCurrency, toMaskedInput } from '@/lib/utils';
 
 export default function OtherExpenseForm() {
   const { id } = useParams();
@@ -49,16 +34,13 @@ export default function OtherExpenseForm() {
       try {
         if (isEdit) {
           const { data } = await otherExpenseService.getById(id);
-          // Se o backend guarda em centavos (inteiro), converte para reais
-          const rawAmount = data.amount ?? data.amount_cents ?? 0;
-          const amountReais = Number(rawAmount) % 1 === 0 ? Number(rawAmount) / 100 : Number(rawAmount);
-
+          
           setForm({
             category: data.category ?? '',
             description: data.description ?? '',
             supplier: data.supplier ?? '',
             document: data.document ?? '',
-            amount: String(amountReais).replace('.', ','), // mostra com vírgula se desejar
+            amount: toMaskedInput(data.amount),
             expense_date: (data.expense_date || '').slice(0, 10),
           });
         }
@@ -82,17 +64,13 @@ export default function OtherExpenseForm() {
       return;
     }
 
-    // Se seu backend espera CENTAVOS, converta:
-    const amountNumber = parseLocaleNumber(form.amount);
-    const amount_cents = Math.round(amountNumber * 100);
-
     const payload = {
       category: form.category,
       description: form.description || null,
       supplier: form.supplier || null,
       document: form.document || null,
-      amount: amount_cents,            // <- envie em centavos se o backend espera assim
-      expense_date: form.expense_date, // YYYY-MM-DD
+      amount: parseCurrency(form.amount),
+      expense_date: form.expense_date,
     };
 
     setLoading(true);
@@ -200,10 +178,10 @@ export default function OtherExpenseForm() {
                 type="text"
                 placeholder="0,00"
                 value={form.amount}
-                onChange={(e) => setField('amount', onlyDecimal(e.target.value))}
+                onChange={(e) => setField('amount', currencyMask(e.target.value))}
                 required
               />
-              <p className="text-xs text-muted-foreground">Use vírgula ou ponto para decimais</p>
+              <p className="text-xs text-muted-foreground">Ex: digite 10345 para R$ 103,45</p>
             </div>
 
             <div className="sm:col-span-2 flex gap-2">

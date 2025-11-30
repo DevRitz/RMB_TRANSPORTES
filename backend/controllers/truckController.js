@@ -1,57 +1,60 @@
 const Truck = require('../models/Truck');
 
 // Criar um novo caminhão
-exports.createTruck = (req, res) => {
-  const { plate } = req.body;
+exports.createTruck = async (req, res) => {
+  try {
+    const { plate } = req.body;
 
-  if (!plate) {
-    return res.status(400).json({ error: 'Placa é obrigatória' });
-  }
-
-  Truck.create(plate, (err, result) => {
-    if (err) {
-      console.error('Erro ao criar caminhão:', err);
-      if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(400).json({ error: 'Placa já cadastrada' });
-      }
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+    if (!plate) {
+      return res.status(400).json({ error: 'Placa é obrigatória' });
     }
+
+    const result = await Truck.create({ plate });
+    
     res.status(201).json({
       message: 'Caminhão criado com sucesso',
-      id: result.insertId,
+      id: result.id,
     });
-  });
+  } catch (err) {
+    console.error('Erro ao criar caminhão:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'Placa já cadastrada' });
+    }
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Listar todos os caminhões
-exports.getAllTrucks = (req, res) => {
-  Truck.findAll((err, results) => {
-    if (err) {
-      console.error('Erro ao buscar caminhões:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+exports.getAllTrucks = async (req, res) => {
+  try {
+    const results = await Truck.findAll();
     res.json(results);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar caminhões:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Buscar caminhão por ID
-exports.getTruckById = (req, res) => {
+exports.getTruckById = async (req, res) => {
   const { id } = req.params;
 
-  Truck.findById(id, (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar caminhão:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const results = await Truck.findById(id);
+    
     if (results.length === 0) {
       return res.status(404).json({ error: 'Caminhão não encontrado' });
     }
+    
     res.json(results[0]);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar caminhão:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Atualizar caminhão
-exports.updateTruck = (req, res) => {
+exports.updateTruck = async (req, res) => {
   const { id } = req.params;
   const { plate } = req.body;
 
@@ -59,19 +62,23 @@ exports.updateTruck = (req, res) => {
     return res.status(400).json({ error: 'Placa é obrigatória' });
   }
 
-  Truck.update(id, plate, (err, result) => {
-    if (err) {
-      console.error('Erro ao atualizar caminhão:', err);
-      if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(400).json({ error: 'Placa já cadastrada' });
-      }
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const result = await Truck.update(id, plate);
+    
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Caminhão não encontrado' });
     }
+    
     res.json({ message: 'Caminhão atualizado com sucesso' });
-  });
+  } catch (err) {
+    console.error('Erro ao atualizar caminhão:', err);
+    
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'Placa já cadastrada' });
+    }
+    
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Deletar caminhão (com exclusão em cascata)

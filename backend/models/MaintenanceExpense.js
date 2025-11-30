@@ -2,27 +2,29 @@ const db = require('../config/database');
 
 class MaintenanceExpense {
   // Criar
-  static create(truckId, amount, mileage, description, expenseDate, cb) {
+  static async create(truckId, amount, mileage, description, expenseDate) {
     const sql = `
       INSERT INTO maintenance_expenses (truck_id, amount, mileage, description, expense_date)
       VALUES (?, ?, ?, ?, ?)
     `;
-    db.query(sql, [truckId, amount, mileage, description, expenseDate], cb);
+    const [result] = await db.execute(sql, [truckId, amount, mileage, description, expenseDate]);
+    return result;
   }
 
   // Listar todas
-  static findAll(cb) {
+  static async findAll() {
     const sql = `
       SELECT m.*, t.plate
       FROM maintenance_expenses m
       JOIN trucks t ON m.truck_id = t.id
       ORDER BY m.expense_date DESC, m.id DESC
     `;
-    db.query(sql, cb);
+    const [rows] = await db.execute(sql);
+    return rows;
   }
 
   // Listar por caminhão
-  static findByTruckId(truckId, cb) {
+  static async findByTruckId(truckId) {
     const sql = `
       SELECT m.*, t.plate
       FROM maintenance_expenses m
@@ -30,11 +32,12 @@ class MaintenanceExpense {
       WHERE m.truck_id = ?
       ORDER BY m.expense_date DESC, m.id DESC
     `;
-    db.query(sql, [truckId], cb);
+    const [rows] = await db.execute(sql, [truckId]);
+    return rows;
   }
 
   // 🔹 Listar por período (ANO/MÊS)
-  static findByPeriod(year, month, cb) {
+  static async findByPeriod(year, month) {
     const sql = `
       SELECT m.*, t.plate
       FROM maintenance_expenses m
@@ -42,27 +45,31 @@ class MaintenanceExpense {
       WHERE YEAR(m.expense_date) = ? AND MONTH(m.expense_date) = ?
       ORDER BY m.expense_date DESC, m.id DESC
     `;
-    db.query(sql, [year, month], cb);
+    const [rows] = await db.execute(sql, [year, month]);
+    return rows;
   }
 
   // Buscar por ID (para edição)
-  static findById(id, cb) {
-    db.query('SELECT * FROM maintenance_expenses WHERE id = ?', [id], cb);
+  static async findById(id) {
+    const [rows] = await db.execute('SELECT * FROM maintenance_expenses WHERE id = ?', [id]);
+    return rows;
   }
 
   // Atualizar por ID
-  static updateById(id, truckId, amount, mileage, description, expenseDate, cb) {
+  static async updateById(id, truckId, amount, mileage, description, expenseDate) {
     const sql = `
       UPDATE maintenance_expenses
       SET truck_id = ?, amount = ?, mileage = ?, description = ?, expense_date = ?
       WHERE id = ?
     `;
-    db.query(sql, [truckId, amount, mileage, description, expenseDate, id], cb);
+    const [result] = await db.execute(sql, [truckId, amount, mileage, description, expenseDate, id]);
+    return result;
   }
 
   // Deletar por ID
-  static deleteById(id, cb) {
-    db.query('DELETE FROM maintenance_expenses WHERE id = ?', [id], cb);
+  static async deleteById(id) {
+    const [result] = await db.execute('DELETE FROM maintenance_expenses WHERE id = ?', [id]);
+    return result;
   }
 }
 

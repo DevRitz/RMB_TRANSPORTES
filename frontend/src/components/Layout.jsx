@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Truck, 
   DollarSign, 
@@ -11,17 +11,26 @@ import {
   Fuel,
   User,
   Wrench,
-  Pen
+  Pen,
+  LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '../contexts/AuthContext';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Caminhões', href: '/trucks', icon: Truck },
     { 
       name: 'Receitas', 
@@ -152,12 +161,21 @@ const Layout = ({ children }) => {
             <h1 className="text-2xl font-bold text-foreground ml-12 md:ml-0">
               Sistema de Controle de Frotas
             </h1>
-            <Button asChild>
-              <Link to="/trucks/new">
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Caminhão
-              </Link>
-            </Button>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-muted-foreground">
+                Olá, <span className="font-medium">{user?.username}</span>
+              </div>
+              <Button asChild>
+                <Link to="/trucks/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Caminhão
+                </Link>
+              </Button>
+              <Button variant="outline" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </Button>
+            </div>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">

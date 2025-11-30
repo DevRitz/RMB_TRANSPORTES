@@ -104,6 +104,11 @@ export default function Reports() {
 
 const fetchMonthlyData = async () => {
   setLoading(true);
+  const timeoutId = setTimeout(() => {
+    console.warn('Reports: timeout ao carregar dados mensais');
+    setLoading(false);
+  }, 10000);
+
   try {
     const res = await reportService.getGeneralMonthlySummary(selectedYear, selectedMonth);
     const raw = res.data || [];
@@ -149,8 +154,10 @@ const fetchMonthlyData = async () => {
     }));
 
     setMonthlyData(consolidated);
+    clearTimeout(timeoutId);
   } catch (e) {
     console.error('Erro ao buscar dados mensais:', e);
+    clearTimeout(timeoutId);
     toast({
       title: 'Erro',
       description: 'Não foi possível carregar os dados mensais.',

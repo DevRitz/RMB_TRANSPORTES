@@ -1,22 +1,24 @@
 const db = require('../config/database');
 
 class DriverExpense {
-  static create(truckId, amount, description, expenseDate, cb) {
+  static async create(truckId, amount, description, expenseDate) {
     const sql = 'INSERT INTO driver_expenses (truck_id, amount, description, expense_date) VALUES (?, ?, ?, ?)';
-    db.query(sql, [truckId, amount, description, expenseDate], cb);
+    const [result] = await db.execute(sql, [truckId, amount, description, expenseDate]);
+    return result;
   }
 
-  static findAll(cb) {
+  static async findAll() {
     const sql = `
       SELECT d.*, t.plate
       FROM driver_expenses d
       JOIN trucks t ON d.truck_id = t.id
       ORDER BY d.expense_date DESC, d.id DESC
     `;
-    db.query(sql, cb);
+    const [rows] = await db.execute(sql);
+    return rows;
   }
 
-  static findByTruckId(truckId, cb) {
+  static async findByTruckId(truckId) {
     const sql = `
       SELECT d.*, t.plate
       FROM driver_expenses d
@@ -24,23 +26,27 @@ class DriverExpense {
       WHERE d.truck_id = ?
       ORDER BY d.expense_date DESC, d.id DESC
     `;
-    db.query(sql, [truckId], cb);
+    const [rows] = await db.execute(sql, [truckId]);
+    return rows;
   }
 
-  static findById(id, cb) {
-    db.query('SELECT * FROM driver_expenses WHERE id = ?', [id], cb);
+  static async findById(id) {
+    const [rows] = await db.execute('SELECT * FROM driver_expenses WHERE id = ?', [id]);
+    return rows;
   }
 
-  static updateById(id, truckId, amount, description, expenseDate, cb) {
+  static async updateById(id, truckId, amount, description, expenseDate) {
     const sql = 'UPDATE driver_expenses SET truck_id=?, amount=?, description=?, expense_date=? WHERE id=?';
-    db.query(sql, [truckId, amount, description, expenseDate, id], cb);
+    const [result] = await db.execute(sql, [truckId, amount, description, expenseDate, id]);
+    return result;
   }
 
-  static deleteById(id, cb) {
-    db.query('DELETE FROM driver_expenses WHERE id = ?', [id], cb);
+  static async deleteById(id) {
+    const [result] = await db.execute('DELETE FROM driver_expenses WHERE id = ?', [id]);
+    return result;
   }
 
-  static findByPeriod(year, month, cb) {
+  static async findByPeriod(year, month) {
     const sql = `
       SELECT d.*, t.plate
       FROM driver_expenses d
@@ -48,7 +54,8 @@ class DriverExpense {
       WHERE YEAR(d.expense_date) = ? AND MONTH(d.expense_date) = ?
       ORDER BY d.expense_date DESC, d.id DESC
     `;
-    db.query(sql, [year, month], cb);
+    const [rows] = await db.execute(sql, [year, month]);
+    return rows;
   }
 }
 

@@ -2,16 +2,17 @@ const db = require('../config/database');
 
 class Revenue {
   // Criar
-  static create(truckId, amount, description, revenueDate, callback) {
+  static async create(truckId, amount, description, revenueDate) {
     const sql = `
       INSERT INTO revenues (truck_id, amount, description, revenue_date)
       VALUES (?, ?, ?, ?)
     `;
-    db.query(sql, [truckId, amount, description, revenueDate], callback);
+    const [result] = await db.execute(sql, [truckId, amount, description, revenueDate]);
+    return result;
   }
 
   // Buscar por caminhão
-  static findByTruckId(truckId, callback) {
+  static async findByTruckId(truckId) {
     const sql = `
       SELECT r.*, t.plate
       FROM revenues r
@@ -19,43 +20,48 @@ class Revenue {
       WHERE r.truck_id = ?
       ORDER BY r.revenue_date DESC, r.id DESC
     `;
-    db.query(sql, [truckId], callback);
+    const [rows] = await db.execute(sql, [truckId]);
+    return rows;
   }
 
   // Buscar todas
-  static findAll(callback) {
+  static async findAll() {
     const sql = `
       SELECT r.*, t.plate
       FROM revenues r
       JOIN trucks t ON r.truck_id = t.id
       ORDER BY r.revenue_date DESC, r.id DESC
     `;
-    db.query(sql, callback);
+    const [rows] = await db.execute(sql);
+    return rows;
   }
 
   // ===== CRUD extra =====
-  static findById(id, callback) {
+  static async findById(id) {
     const sql = `
       SELECT r.*, t.plate
       FROM revenues r
       JOIN trucks t ON r.truck_id = t.id
       WHERE r.id = ?
     `;
-    db.query(sql, [id], callback);
+    const [rows] = await db.execute(sql, [id]);
+    return rows;
   }
 
-  static updateById(id, { truck_id, amount, description, revenue_date }, callback) {
+  static async updateById(id, { truck_id, amount, description, revenue_date }) {
     const sql = `
       UPDATE revenues
       SET truck_id = ?, amount = ?, description = ?, revenue_date = ?
       WHERE id = ?
     `;
-    db.query(sql, [truck_id, amount, description, revenue_date, id], callback);
+    const [result] = await db.execute(sql, [truck_id, amount, description, revenue_date, id]);
+    return result;
   }
 
-  static deleteById(id, callback) {
+  static async deleteById(id) {
     const sql = 'DELETE FROM revenues WHERE id = ?';
-    db.query(sql, [id], callback);
+    const [result] = await db.execute(sql, [id]);
+    return result;
   }
 }
 

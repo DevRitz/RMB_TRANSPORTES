@@ -1,35 +1,44 @@
 const db = require('../config/database');
-const util = require('util');
-
-// Promisifica métodos da conexão para usar async/await
-const query    = util.promisify(db.query).bind(db);
-const beginTx  = util.promisify(db.beginTransaction).bind(db);
-const commitTx = util.promisify(db.commit).bind(db);
-const rollTx   = util.promisify(db.rollback).bind(db);
 
 class Truck {
   // Criar um novo caminhão
-  static create(plate, callback) {
+  static async create(truckData) {
+    const { plate } = truckData;
     const sql = 'INSERT INTO trucks (plate) VALUES (?)';
-    db.query(sql, [plate], callback);
+    const [result] = await db.execute(sql, [plate]);
+    
+    return {
+      id: result.insertId,
+      plate,
+      createdAt: new Date()
+    };
   }
 
   // Buscar todos os caminhões
-  static findAll(callback) {
+  static async findAll() {
     const sql = 'SELECT * FROM trucks ORDER BY created_at DESC';
-    db.query(sql, callback);
+    const [rows] = await db.execute(sql);
+    return rows;
   }
 
   // Buscar caminhão por ID
-  static findById(id, callback) {
+  static async findById(id) {
     const sql = 'SELECT * FROM trucks WHERE id = ?';
-    db.query(sql, [id], callback);
+    const [rows] = await db.execute(sql, [id]);
+    return rows.length > 0 ? rows[0] : null;
   }
 
   // Atualizar caminhão
-  static update(id, plate, callback) {
+  static async update(id, truckData) {
+    const { plate } = truckData;
     const sql = 'UPDATE trucks SET plate = ? WHERE id = ?';
-    db.query(sql, [plate, id], callback);
+    const [result] = await db.execute(sql, [plate, id]);
+    
+    if (result.affectedRows === 0) {
+      throw new Error('Caminhão não encontrado');
+    }
+
+    return await Truck.findById(id);
   }
 
   /**
@@ -37,26 +46,43 @@ class Truck {
    * IMPORTANTE: adicione aqui TODAS as tabelas filhas que referenciam trucks(id).
    */
   static async deleteCascade(id) {
+    const connection = await db.getConnection();
+    
     try {
-      await beginTx();
+      await connection.beginTransaction();
 
       // Apaga registros filhos primeiro
-      await query('DELETE FROM fuel_expenses        WHERE truck_id = ?', [id]);
-      await query('DELETE FROM driver_expenses      WHERE truck_id = ?', [id]);
-      await query('DELETE FROM maintenance_expenses WHERE truck_id = ?', [id]);
-      await query('DELETE FROM revenues             WHERE truck_id = ?', [id]);
+      await connection.execute('DELETE FROM fuel_expenses WHERE truck_id = ?', [id]);
+      await connection.execute('DELETE FROM driver_expenses WHERE truck_id = ?', [id]);
+      await connection.execute('DELETE FROM maintenance_expenses WHERE truck_id = ?', [id]);
+      await connection.execute('DELETE FROM other_expenses WHERE truck_id = ?', [id]);
+      await connection.execute('DELETE FROM revenues WHERE truck_id = ?', [id]);
 
       // Agora apaga o caminhão
-      const result = await query('DELETE FROM trucks WHERE id = ?', [id]);
+      const [result] = await connection.execute('DELETE FROM trucks WHERE id = ?', [id]);
 
-      await commitTx();
-      // mysql2 em modo callback retorna OkPacket; aqui result.affectedRows pode vir como number
-      const affectedRows = result?.affectedRows ?? (Array.isArray(result) ? result[0]?.affectedRows : 0);
-      return { affectedRows };
+      await connection.commit();
+      return { affectedRows: result.affectedRows };
     } catch (err) {
-      try { await rollTx(); } catch (_) {}
+      await connection.rollback();
       throw err;
+    } finally {
+      connection.release();
     }
+  }
+
+  // Criar tabela de caminhões (migração)
+  static async createTable() {
+    const query = `
+      CREATE TABLE IF NOT EXISTS trucks (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        plate VARCHAR(20) UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `;
+    
+    await db.execute(query);
   }
 }
 

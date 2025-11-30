@@ -18,11 +18,18 @@ const TruckList = () => {
   }, []);
 
   const fetchTrucks = async () => {
+    const timeoutId = setTimeout(() => {
+      console.warn('TruckList: timeout ao carregar caminhões');
+      setLoading(false);
+    }, 10000);
+
     try {
       const response = await truckService.getAll();
       setTrucks(response.data);
+      clearTimeout(timeoutId);
     } catch (error) {
       console.error('Erro ao buscar caminhões:', error);
+      clearTimeout(timeoutId);
       toast({
         title: 'Erro',
         description: 'Não foi possível carregar os caminhões.',

@@ -117,7 +117,14 @@ export default function ExpensesCrud() {
   };
 
   useEffect(() => {
-    fetchAll();
+    const timeoutId = setTimeout(() => {
+      console.warn('ExpensesCrud: timeout ao carregar dados');
+      setLoadingFuel(false);
+      setLoadingDriver(false);
+      setLoadingMaintenance(false);
+    }, 10000);
+
+    fetchAll().finally(() => clearTimeout(timeoutId));
   }, []);
 
   // sempre que período mudar, recarrega Outras Despesas

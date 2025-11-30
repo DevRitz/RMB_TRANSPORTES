@@ -9,23 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { truckService, driverExpenseService } from '../../services/api';
-
-const onlyDecimal = (v) => v.replace(/[^\d.,-]/g, '');
-const parseLocaleNumber = (v) => {
-  if (v == null || v === '') return 0;
-  let s = String(v).trim();
-  const hasComma = s.includes(',');
-  const hasDot = s.includes('.');
-  if (hasComma) {
-    s = s.replace(/\./g, '').replace(',', '.');
-  } else if (hasDot) {
-    if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
-      s = s.replace(/\./g, '');
-    }
-  }
-  const n = parseFloat(s);
-  return Number.isFinite(n) ? n : 0;
-};
+import { currencyMask, parseCurrency, toMaskedInput } from '@/lib/utils';
 
 export default function DriverExpenseForm() {
   const { id } = useParams();
@@ -52,7 +36,7 @@ export default function DriverExpenseForm() {
           const { data } = await driverExpenseService.getById(id);
           setFormData({
             truck_id: String(data.truck_id ?? ''),
-            amount: String(data.amount ?? ''),
+            amount: toMaskedInput(data.amount),
             description: data.description ?? '',
             expense_date: (data.expense_date || '').slice(0, 10),
           });
@@ -78,7 +62,7 @@ export default function DriverExpenseForm() {
 
     const payload = {
       truck_id: parseInt(formData.truck_id, 10),
-      amount: parseLocaleNumber(formData.amount),
+      amount: parseCurrency(formData.amount),
       description: formData.description || null,
       expense_date: formData.expense_date,
     };
@@ -151,10 +135,10 @@ export default function DriverExpenseForm() {
                 type="text"
                 placeholder="0,00"
                 value={formData.amount}
-                onChange={(e) => handleInputChange('amount', onlyDecimal(e.target.value))}
+                onChange={(e) => handleInputChange('amount', currencyMask(e.target.value))}
                 required
               />
-              <p className="text-sm text-muted-foreground">Aceita vírgula ou ponto (e também 10.000).</p>
+              <p className="text-sm text-muted-foreground">Ex: digite 10345 para R$ 103,45</p>
             </div>
 
             <div className="space-y-2">

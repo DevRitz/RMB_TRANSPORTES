@@ -9,13 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { truckService, revenueService } from '../../services/api';
-
-const filterCurrencyInput = (v) => String(v ?? '').replace(/[^\d.,-]/g, '');
-const toNumber = (v) => {
-  if (v == null || v === '') return 0;
-  const s = String(v).trim();
-  return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-};
+import { currencyMask, parseCurrency, toMaskedInput } from '@/lib/utils';
 
 const RevenueForm = () => {
   const { id } = useParams();                // /revenues/edit/:id -> edição
@@ -45,7 +39,7 @@ const RevenueForm = () => {
           const { data } = await revenueService.getById(id);
           setFormData({
             truck_id: String(data.truck_id),
-            amount: String(data.amount ?? ''),
+            amount: toMaskedInput(data.amount),
             description: data.description ?? '',
             revenue_date:
               (data.revenue_date || '').slice(0, 10) ||
@@ -79,9 +73,9 @@ const RevenueForm = () => {
 
     const payload = {
       truck_id: parseInt(formData.truck_id, 10),
-      amount: toNumber(formData.amount),     // <<< número real (100 → 100.00)
+      amount: parseCurrency(formData.amount),
       description: formData.description || null,
-      revenue_date: formData.revenue_date,   // YYYY-MM-DD
+      revenue_date: formData.revenue_date,
     };
 
     if (!Number.isFinite(payload.amount) || payload.amount <= 0) {
@@ -176,12 +170,12 @@ const RevenueForm = () => {
                 placeholder="0,00"
                 value={formData.amount}
                 onChange={(e) =>
-                  handleInputChange('amount', filterCurrencyInput(e.target.value))
+                  handleInputChange('amount', currencyMask(e.target.value))
                 }
                 required
               />
               <p className="text-sm text-muted-foreground">
-                Use vírgula ou ponto para decimais
+                Ex: digite 10345 para R$ 103,45
               </p>
             </div>
 

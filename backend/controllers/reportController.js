@@ -1,23 +1,23 @@
 const Report = require('../models/Report');
 
 // Balanço por caminhão
-exports.getTruckBalance = (req, res) => {
+exports.getTruckBalance = async (req, res) => {
   const { truck_id } = req.params;
 
-  Report.getTruckBalance(truck_id, (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar balanço do caminhão:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const results = await Report.getTruckBalance(truck_id);
     if (results.length === 0) {
       return res.status(404).json({ error: 'Caminhão não encontrado' });
     }
     res.json(results[0]);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar balanço do caminhão:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Resumo mensal por caminhão
-exports.getMonthlyTruckSummary = (req, res) => {
+exports.getMonthlyTruckSummary = async (req, res) => {
   const { truck_id } = req.params;
   const { year, month } = req.query;
 
@@ -25,45 +25,45 @@ exports.getMonthlyTruckSummary = (req, res) => {
     return res.status(400).json({ error: 'Ano e mês são obrigatórios' });
   }
 
-  Report.getMonthlyTruckSummary(truck_id, year, month, (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar resumo mensal do caminhão:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const results = await Report.getMonthlyTruckSummary(truck_id, year, month);
     if (results.length === 0) {
       return res.status(404).json({ error: 'Caminhão não encontrado' });
     }
     res.json(results[0]);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar resumo mensal do caminhão:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Resumo mensal geral
-exports.getGeneralMonthlySummary = (req, res) => {
+exports.getGeneralMonthlySummary = async (req, res) => {
   const { year, month } = req.query;
 
   if (!year || !month) {
     return res.status(400).json({ error: 'Ano e mês são obrigatórios' });
   }
 
-  Report.getGeneralMonthlySummary(year, month, (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar resumo mensal geral:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const results = await Report.getGeneralMonthlySummary(year, month);
     res.json(results);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar resumo mensal geral:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // Total gasto com motoristas
-exports.getDriverExpensesTotal = (req, res) => {
+exports.getDriverExpensesTotal = async (req, res) => {
   const { year, month } = req.query;
 
-  Report.getDriverExpensesTotal(year, month, (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar total de despesas com motoristas:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const results = await Report.getDriverExpensesTotal(year, month);
     res.json(results[0]);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar total de despesas com motoristas:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 

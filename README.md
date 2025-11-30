@@ -2,7 +2,21 @@
 
 Sistema completo para controle de frotas de caminhões desenvolvido com React, Node.js, Express e MySQL.
 
+## ✨ Novidades desta Versão
+
+- 🔐 **Sistema de Autenticação JWT** - Login seguro com tokens
+- 💰 **Máscara de Moeda Brasileira** - Digite valores facilmente (ex: 10345 = R$ 103,45)
+- 🚀 **Async/Await** - Backend moderno e eficiente
+- 📱 **Interface Aprimorada** - Design responsivo e intuitivo
+- 🔒 **Rotas Protegidas** - Acesso controlado por autenticação
+
 ## 📋 Funcionalidades
+
+### 🔐 Autenticação e Segurança
+- ✅ Login com JWT (JSON Web Token)
+- ✅ Proteção de rotas privadas
+- ✅ Logout seguro
+- ✅ Usuário admin padrão (admin/admin123)
 
 ### Gestão de Caminhões
 - ✅ Cadastro de caminhões por placa
@@ -15,6 +29,8 @@ Sistema completo para controle de frotas de caminhões desenvolvido com React, N
 - ✅ Registro de despesas de combustível (litros, preço, quilometragem)
 - ✅ Registro de despesas com motoristas (diárias, ajudas de custo)
 - ✅ Registro de despesas de manutenção (mecânica, revisões, reparos)
+- ✅ Registro de outras despesas (luz, escritório, serviços)
+- 💰 **Máscara de moeda automática** em todos os campos de valor
 
 ### Relatórios e Análises
 - ✅ Balanço individual por caminhão (receitas vs despesas)
@@ -29,6 +45,7 @@ Sistema completo para controle de frotas de caminhões desenvolvido com React, N
 - ✅ Navegação intuitiva com sidebar
 - ✅ Componentes reutilizáveis com shadcn/ui
 - ✅ Notificações toast para feedback
+- ✅ Tela de login moderna
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -36,7 +53,9 @@ Sistema completo para controle de frotas de caminhões desenvolvido com React, N
 - **Node.js** - Runtime JavaScript
 - **Express** - Framework web
 - **MySQL** - Banco de dados relacional
-- **mysql2** - Driver MySQL para Node.js
+- **mysql2** - Driver MySQL com suporte a Promises
+- **jsonwebtoken** - Autenticação JWT
+- **bcryptjs** - Hash de senhas
 - **cors** - Middleware para CORS
 - **dotenv** - Gerenciamento de variáveis de ambiente
 

@@ -12,7 +12,7 @@ const toInt = (v) => {
 };
 
 // CREATE
-exports.createMaintenanceExpense = (req, res) => {
+exports.createMaintenanceExpense = async (req, res) => {
   const { truck_id, amount, mileage, description, expense_date } = req.body;
 
   if (!truck_id || amount == null || !expense_date) {
@@ -28,73 +28,73 @@ exports.createMaintenanceExpense = (req, res) => {
   if (mileageInt != null && (!Number.isInteger(mileageInt) || mileageInt < 0))
     return res.status(400).json({ error: 'mileage inválido' });
 
-  MaintenanceExpense.create(truckIdNum, amountNum, mileageInt, description ?? null, expense_date, (err, result) => {
-    if (err) {
-      console.error('Erro ao criar despesa de manutenção:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const result = await MaintenanceExpense.create(truckIdNum, amountNum, mileageInt, description ?? null, expense_date);
     return res.status(201).json({ message: 'Despesa de manutenção criada com sucesso', id: result?.insertId });
-  });
+  } catch (err) {
+    console.error('Erro ao criar despesa de manutenção:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // LISTS
-exports.getMaintenanceExpensesByTruck = (req, res) => {
+exports.getMaintenanceExpensesByTruck = async (req, res) => {
   const truckIdNum = toInt(req.params.truck_id);
   if (!Number.isInteger(truckIdNum)) return res.status(400).json({ error: 'truck_id inválido' });
 
-  MaintenanceExpense.findByTruckId(truckIdNum, (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar despesas de manutenção:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const results = await MaintenanceExpense.findByTruckId(truckIdNum);
     return res.json(results);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar despesas de manutenção:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
-exports.getAllMaintenanceExpenses = (req, res) => {
-  MaintenanceExpense.findAll((err, results) => {
-    if (err) {
-      console.error('Erro ao buscar despesas de manutenção:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+exports.getAllMaintenanceExpenses = async (req, res) => {
+  try {
+    const results = await MaintenanceExpense.findAll();
     return res.json(results);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar despesas de manutenção:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // (opcional) período
-exports.getMaintenanceExpensesByPeriod = (req, res) => {
+exports.getMaintenanceExpensesByPeriod = async (req, res) => {
   const year = toInt(req.query.year);
   const month = toInt(req.query.month);
   if (!Number.isInteger(year) || !Number.isInteger(month)) {
     return res.status(400).json({ error: 'Parâmetros year e month são obrigatórios' });
   }
 
-  MaintenanceExpense.findByPeriod(year, month, (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar despesas de manutenção por período:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const results = await MaintenanceExpense.findByPeriod(year, month);
     return res.json(results);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar despesas de manutenção por período:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // READ by ID
-exports.getMaintenanceExpenseById = (req, res) => {
+exports.getMaintenanceExpenseById = async (req, res) => {
   const id = toInt(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'id inválido' });
 
-  MaintenanceExpense.findById(id, (err, rows) => {
-    if (err) {
-      console.error('Erro ao buscar despesa de manutenção por id:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const rows = await MaintenanceExpense.findById(id);
     if (!rows || rows.length === 0) return res.status(404).json({ error: 'Registro não encontrado' });
     return res.json(rows[0]);
-  });
+  } catch (err) {
+    console.error('Erro ao buscar despesa de manutenção por id:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // UPDATE by ID
-exports.updateMaintenanceExpense = (req, res) => {
+exports.updateMaintenanceExpense = async (req, res) => {
   const id = toInt(req.params.id);
   const { truck_id, amount, mileage, description, expense_date } = req.body;
 
@@ -111,35 +111,34 @@ exports.updateMaintenanceExpense = (req, res) => {
   if (mileageInt != null && (!Number.isInteger(mileageInt) || mileageInt < 0))
     return res.status(400).json({ error: 'mileage inválido' });
 
-  MaintenanceExpense.updateById(
-    id,
-    truckIdNum,
-    amountNum,
-    mileageInt,
-    description ?? null,
-    expense_date,
-    (err, result) => {
-      if (err) {
-        console.error('Erro ao atualizar despesa de manutenção:', err);
-        return res.status(500).json({ error: 'Erro interno do servidor' });
-      }
-      if (result?.affectedRows === 0) return res.status(404).json({ error: 'Registro não encontrado' });
-      return res.json({ message: 'Despesa de manutenção atualizada com sucesso' });
-    }
-  );
+  try {
+    const result = await MaintenanceExpense.updateById(
+      id,
+      truckIdNum,
+      amountNum,
+      mileageInt,
+      description ?? null,
+      expense_date
+    );
+    if (result?.affectedRows === 0) return res.status(404).json({ error: 'Registro não encontrado' });
+    return res.json({ message: 'Despesa de manutenção atualizada com sucesso' });
+  } catch (err) {
+    console.error('Erro ao atualizar despesa de manutenção:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // DELETE by ID
-exports.deleteMaintenanceExpense = (req, res) => {
+exports.deleteMaintenanceExpense = async (req, res) => {
   const id = toInt(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'id inválido' });
 
-  MaintenanceExpense.deleteById(id, (err, result) => {
-    if (err) {
-      console.error('Erro ao excluir despesa de manutenção:', err);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
-    }
+  try {
+    const result = await MaintenanceExpense.deleteById(id);
     if (result?.affectedRows === 0) return res.status(404).json({ error: 'Registro não encontrado' });
     return res.json({ message: 'Despesa de manutenção excluída com sucesso' });
-  });
+  } catch (err) {
+    console.error('Erro ao excluir despesa de manutenção:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };

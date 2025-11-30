@@ -16,6 +16,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      // Timeout de segurança - se demorar mais de 10 segundos, para de carregar
+      const timeoutId = setTimeout(() => {
+        console.warn('Dashboard: timeout ao carregar estatísticas');
+        setLoading(false);
+      }, 10000);
+
       try {
         // Buscar total de caminhões
         const trucksResponse = await truckService.getAll();
@@ -42,9 +48,12 @@ const Dashboard = () => {
           totalExpenses,
           balance: totalRevenue - totalExpenses,
         });
+        clearTimeout(timeoutId);
+        setLoading(false);
       } catch (error) {
         console.error('Erro ao buscar estatísticas:', error);
-      } finally {
+        clearTimeout(timeoutId);
+        // Mesmo com erro, setar loading como false para mostrar a interface
         setLoading(false);
       }
     };

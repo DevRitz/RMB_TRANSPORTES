@@ -84,6 +84,11 @@ const RevenueList = () => {
 
   const fetchAll = async () => {
     setLoading(true);
+    const timeoutId = setTimeout(() => {
+      console.warn('RevenueList: timeout ao carregar dados');
+      setLoading(false);
+    }, 10000);
+
     try {
       const [revRes, truckRes] = await Promise.all([
         revenueService.getAll(),
@@ -91,8 +96,10 @@ const RevenueList = () => {
       ]);
       setRevenues(revRes.data || []);
       setTrucks(truckRes.data || []);
+      clearTimeout(timeoutId);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      clearTimeout(timeoutId);
       toast({
         title: 'Erro',
         description: 'Não foi possível carregar receitas/caminhões.',
