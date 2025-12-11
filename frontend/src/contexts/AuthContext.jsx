@@ -34,8 +34,6 @@ export const AuthProvider = ({ children }) => {
 
         setUser(response.data.user);
       } catch (error) {
-        // Token inválido, remover do localStorage
-        localStorage.removeItem('authToken');
         console.error('Erro ao verificar token:', error);
         localStorage.removeItem('authToken');
       } finally {
@@ -44,12 +42,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     verifyToken();
-  }, []); // Array vazio garante que executa apenas uma vez
+  }, []);
 
-  const login = async (username, password) => {
-    try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
   const login = async (username, password) => {
     try {
       const response = await api.post('/auth/login', { username, password });
@@ -65,7 +59,11 @@ export const AuthProvider = ({ children }) => {
       console.error('Erro no login:', error);
       return { success: false, message: 'Erro de conexão com o servidor' };
     }
-  };setUser(null);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('authToken');
+    setUser(null);
   };
 
   const value = {
