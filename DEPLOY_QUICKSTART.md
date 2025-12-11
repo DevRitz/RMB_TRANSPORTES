@@ -12,52 +12,85 @@ Corrigi o problema dos erros 500. Os controllers estavam tentando retornar `null
 - ✅ `backend/controllers/maintenanceExpenseController.js` - Retorna array vazio quando não houver despesas de manutenção
 - ✅ `backend/controllers/otherExpenseController.js` - Retorna array vazio quando não houver outras despesas
 
+## IMPORTANTE: Schema do Banco Desatualizado!
+
+O problema era que o `init.sql` tinha **nomes de colunas errados**:
+- ❌ Usava `date` e `value` mas o código espera `expense_date` e `amount`
+- ❌ Tabela `other_expenses` não tinha colunas `supplier` e `document`
+
+**Solução:** Recriar banco de dados com schema correto.
+
 ## Executar Deploy na VPS
 
-### Opção 1: Script Automatizado (Recomendado)
+### SOLUÇÃO COMPLETA (Recomendado)
+
+Este comando vai **recriar o banco de dados** (vai perder dados do caminhão cadastrado):
 
 ```bash
-# Na VPS, no diretório do projeto
 cd /opt/rmb-transportes
+git pull origin main
 
-# Executar o script de deploy
-bash deploy.sh
+# Parar tudo e remover volume do banco (APAGA DADOS!)
+docker compose down -v
+
+# Rebuild com schema correto
+docker compose build backend --no-cache
+docker compose build frontend --no-cache
+
+# Iniciar tudo (banco será recriado com schema correto)
+docker compose up -d
+
+# Aguardar containers iniciarem
+sleep 10
+
+# Verificar logs
+docker compose logs backend --tail=30
 ```
 
-O script vai:
-1. ✅ Criar backup do banco de dados
-2. ✅ Baixar últimas alterações do GitHub
-3. ✅ Parar os containers
-4. ✅ Reconstruir backend
-5. ✅ Reconstruir frontend (sem cache)
-6. ✅ Iniciar todos os containers
-7. ✅ Mostrar status e logs
+### Alternativa: Migrar Banco Existente (Se tiver dados importantes)
 
-### Opção 2: Manual (Passo a Passo)
+Se você tem dados importantes e quer migrar:
 
 ```bash
-# 1. Ir para o diretório do projeto
+cd /opt/rmb-transportes
+git pull origin main
+
+# 1. Fazer backup primeiro
+docker compose exec db mysqldump -u rmb_user -prmb_password_2024 rmb_transportes > backup_$(date +%Y%m%d).sql
+
+# 2. Aplicar migração (VAI RECRIAR TABELAS - PERDA DE DADOS!)
+docker compose exec -T db mysql -u rmb_user -prmb_password_2024 rmb_transportes < fix_schema.sql
+
+# 3. Reiniciar backend para recriar usuário admin
+docker compose restart backend
+
+# 4. Verificar logs
+docker compose logs backend --tail=30
+```
+
+### Opção Rápida (Passo a Passo)
+
+```bash
+# 1. Ir para o diretório
 cd /opt/rmb-transportes
 
 # 2. Baixar alterações
 git pull origin main
 
-# 3. Parar containers
-docker compose down
+# 3. IMPORTANTE: Remover banco antigo com schema errado
+docker compose down -v
 
-# 4. Rebuild do backend
-docker compose build backend
-
-# 5. Rebuild do frontend (sem cache para forçar atualização)
+# 4. Rebuild (força recompilação)
+docker compose build backend --no-cache
 docker compose build frontend --no-cache
 
-# 6. Iniciar tudo
+# 5. Iniciar tudo
 docker compose up -d
 
-# 7. Verificar status
+# 6. Verificar status
 docker compose ps
 
-# 8. Ver logs do backend para confirmar
+# 7. Ver logs
 docker compose logs backend --tail=30
 ```
 
