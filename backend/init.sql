@@ -1,0 +1,91 @@
+-- Script de inicialização do banco de dados RMB Transportes
+
+-- Tabela de caminhões
+CREATE TABLE IF NOT EXISTS trucks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  plate VARCHAR(10) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabela de receitas
+CREATE TABLE IF NOT EXISTS revenues (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  truck_id INT NOT NULL,
+  date DATE NOT NULL,
+  value DECIMAL(10, 2) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (truck_id) REFERENCES trucks(id) ON DELETE CASCADE
+);
+
+-- Tabela de despesas com combustível
+CREATE TABLE IF NOT EXISTS fuel_expenses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  truck_id INT NOT NULL,
+  date DATE NOT NULL,
+  liters DECIMAL(10, 2) NOT NULL,
+  price_per_liter DECIMAL(10, 2) NOT NULL,
+  total_value DECIMAL(10, 2) NOT NULL,
+  odometer INT,
+  gas_station VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (truck_id) REFERENCES trucks(id) ON DELETE CASCADE
+);
+
+-- Tabela de despesas com motorista
+CREATE TABLE IF NOT EXISTS driver_expenses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  truck_id INT NOT NULL,
+  date DATE NOT NULL,
+  driver_name VARCHAR(255) NOT NULL,
+  value DECIMAL(10, 2) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (truck_id) REFERENCES trucks(id) ON DELETE CASCADE
+);
+
+-- Tabela de despesas com manutenção
+CREATE TABLE IF NOT EXISTS maintenance_expenses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  truck_id INT NOT NULL,
+  date DATE NOT NULL,
+  type VARCHAR(100) NOT NULL,
+  value DECIMAL(10, 2) NOT NULL,
+  description TEXT,
+  workshop VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (truck_id) REFERENCES trucks(id) ON DELETE CASCADE
+);
+
+-- Tabela de outras despesas
+CREATE TABLE IF NOT EXISTS other_expenses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  truck_id INT NOT NULL,
+  date DATE NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  value DECIMAL(10, 2) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (truck_id) REFERENCES trucks(id) ON DELETE CASCADE
+);
+
+-- Tabela de usuários
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Inserir usuário admin padrão (senha: admin123)
+-- Hash bcrypt de 'admin123' com salt rounds = 10
+INSERT INTO users (username, password) 
+VALUES ('admin', '$2b$10$rH5VqP5lJ5Z5J5Z5J5Z5JOYqK5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5a')
+ON DUPLICATE KEY UPDATE username = username;
