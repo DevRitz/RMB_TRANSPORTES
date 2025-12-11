@@ -41,7 +41,7 @@ exports.createFuelExpense = async (req, res) => {
 // LISTS
 exports.getAllFuelExpenses = async (req, res) => {
   try {
-    const results = await FuelExpense.findAll();
+    const results = await FuelExpense.findAll() || [];
     return res.json(results);
   } catch (err) {
     console.error('Erro ao buscar despesas de combustível:', err);

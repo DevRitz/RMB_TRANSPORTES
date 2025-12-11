@@ -53,7 +53,7 @@ exports.getMaintenanceExpensesByTruck = async (req, res) => {
 
 exports.getAllMaintenanceExpenses = async (req, res) => {
   try {
-    const results = await MaintenanceExpense.findAll();
+    const results = await MaintenanceExpense.findAll() || [];
     return res.json(results);
   } catch (err) {
     console.error('Erro ao buscar despesas de manutenção:', err);
@@ -70,7 +70,7 @@ exports.getMaintenanceExpensesByPeriod = async (req, res) => {
   }
 
   try {
-    const results = await MaintenanceExpense.findByPeriod(year, month);
+    const results = await MaintenanceExpense.findByPeriod(year, month) || [];
     return res.json(results);
   } catch (err) {
     console.error('Erro ao buscar despesas de manutenção por período:', err);

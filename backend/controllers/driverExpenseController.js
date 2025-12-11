@@ -107,7 +107,7 @@ exports.getDriverExpensesByTruck = async (req, res) => {
 
 exports.getAllDriverExpenses = async (req, res) => {
   try {
-    const results = await DriverExpense.findAll();
+    const results = await DriverExpense.findAll() || [];
     return res.json(results);
   } catch (err) {
     console.error('Erro ao buscar despesas de motorista:', err);
@@ -123,7 +123,7 @@ exports.getDriverExpensesByPeriod = async (req, res) => {
     return res.status(400).json({ error: 'Parâmetros year e month são obrigatórios' });
   }
   try {
-    const rows = await DriverExpense.findByPeriod(year, month);
+    const rows = await DriverExpense.findByPeriod(year, month) || [];
     return res.json(rows);
   } catch (err) {
     console.error('Erro ao buscar despesas de motorista por período:', err);

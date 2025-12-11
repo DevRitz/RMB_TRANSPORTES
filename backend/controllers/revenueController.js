@@ -47,7 +47,7 @@ exports.getRevenuesByTruck = async (req, res) => {
 // Listar todas
 exports.getAllRevenues = async (req, res) => {
   try {
-    const results = await Revenue.findAll();
+    const results = await Revenue.findAll() || [];
     res.json(results);
   } catch (err) {
     console.error('Erro ao buscar receitas:', err);

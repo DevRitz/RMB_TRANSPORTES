@@ -47,7 +47,8 @@ exports.getGeneralMonthlySummary = async (req, res) => {
 
   try {
     const results = await Report.getGeneralMonthlySummary(year, month);
-    res.json(results);
+    // Retorna array vazio se não houver resultados
+    res.json(results || []);
   } catch (err) {
     console.error('Erro ao buscar resumo mensal geral:', err);
     return res.status(500).json({ error: 'Erro interno do servidor' });
@@ -60,7 +61,8 @@ exports.getDriverExpensesTotal = async (req, res) => {
 
   try {
     const results = await Report.getDriverExpensesTotal(year, month);
-    res.json(results[0]);
+    // Retorna objeto com total 0 se não houver resultados
+    res.json(results[0] || { total: 0 });
   } catch (err) {
     console.error('Erro ao buscar total de despesas com motoristas:', err);
     return res.status(500).json({ error: 'Erro interno do servidor' });

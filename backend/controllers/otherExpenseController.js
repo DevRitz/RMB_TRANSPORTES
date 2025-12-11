@@ -39,7 +39,7 @@ exports.create = async (req, res) => {
 // Listar todas
 exports.getAll = async (_req, res) => {
   try {
-    const rows = await OtherExpense.findAll();
+    const rows = await OtherExpense.findAll() || [];
     return res.json(rows);
   } catch (err) {
     console.error('Erro ao listar outras despesas:', err);
@@ -71,7 +71,7 @@ exports.getByPeriod = async (req, res) => {
   }
 
   try {
-    const rows = await OtherExpense.findByPeriod(year, month);
+    const rows = await OtherExpense.findByPeriod(year, month) || [];
     return res.json(rows);
   } catch (err) {
     console.error('Erro ao buscar outras despesas por período:', err);
