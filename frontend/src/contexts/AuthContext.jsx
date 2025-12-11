@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -25,20 +26,16 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch('http://localhost:5000/api/auth/profile', {
+        const response = await api.get('/auth/profile', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        } else {
-          // Token inválido, remover do localStorage
-          localStorage.removeItem('authToken');
-        }
+        setUser(response.data.user);
       } catch (error) {
+        // Token inválido, remover do localStorage
+        localStorage.removeItem('authToken');
         console.error('Erro ao verificar token:', error);
         localStorage.removeItem('authToken');
       } finally {
@@ -53,30 +50,22 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
+  const login = async (username, password) => {
+    try {
+      const response = await api.post('/auth/login', { username, password });
 
-      const data = await response.json();
-
-      if (data.success) {
-        localStorage.setItem('authToken', data.token);
-        setUser(data.user);
+      if (response.data.success) {
+        localStorage.setItem('authToken', response.data.token);
+        setUser(response.data.user);
         return { success: true };
       } else {
-        return { success: false, message: data.message };
+        return { success: false, message: response.data.message };
       }
     } catch (error) {
       console.error('Erro no login:', error);
       return { success: false, message: 'Erro de conexão com o servidor' };
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    setUser(null);
+  };setUser(null);
   };
 
   const value = {
