@@ -51,11 +51,6 @@ const getExpenseYearMonth = (row) => {
   return getYearMonth(src);
 };
 
-// Normalizações CONSISTENTES (API retorna ×100 para despesas de frota):
-const normMoney = (amount) => toNumber(amount) / 100;          // centavos -> reais
-const normLiters = (liters) => toNumber(liters) / 100;         // centilitros -> litros
-const normPricePerLiter = (p) => toNumber(p) / 100;            // centavos -> reais
-
 export default function ExpensesCrud() {
   const [active, setActive] = useState('fuel'); // 'fuel' | 'driver' | 'maintenance' | 'other'
   const [trucks, setTrucks] = useState([]);
@@ -172,7 +167,7 @@ export default function ExpensesCrud() {
   }, [others, selectedOtherCat]);
 
  const othersTotals = useMemo(() => {
-   const total = (othersFiltered || []).reduce((acc, r) => acc + normMoney(r.amount), 0); // centavos -> reais
+   const total = (othersFiltered || []).reduce((acc, r) => acc + toNumber(r.amount), 0);
    return { total, count: othersFiltered.length };
  }, [othersFiltered]);
 
@@ -321,8 +316,8 @@ export default function ExpensesCrud() {
                 </TableHeader>
                 <TableBody>
                   {fuelFiltered.map((r) => {
-                    const liters = normLiters(r.liters);
-                    const price = normPricePerLiter(r.price_per_liter);
+                    const liters = toNumber(r.liters);
+                    const price = toNumber(r.price_per_liter);
                     const total = liters * price;
                     return (
                       <TableRow key={r.id}>
@@ -390,7 +385,7 @@ export default function ExpensesCrud() {
                 </TableHeader>
                 <TableBody>
                   {driverFiltered.map((r) => {
-                    const amount = normMoney(r.amount);
+                    const amount = toNumber(r.amount);
                     return (
                       <TableRow key={r.id}>
                         <TableCell className="font-medium">{r.plate || `ID ${r.truck_id}`}</TableCell>
@@ -456,7 +451,7 @@ export default function ExpensesCrud() {
                 </TableHeader>
                 <TableBody>
                   {maintFiltered.map((r) => {
-                    const amount = normMoney(r.amount);
+                    const amount = toNumber(r.amount);
                     return (
                       <TableRow key={r.id}>
                         <TableCell className="font-medium">{r.plate || `ID ${r.truck_id}`}</TableCell>
@@ -565,7 +560,7 @@ export default function ExpensesCrud() {
                       <TableCell>{exp.supplier || '-'}</TableCell>
                       <TableCell>{exp.document || '-'}</TableCell>
                       <TableCell className="text-muted-foreground">{exp.description || '-'}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(normMoney(exp.amount))}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(toNumber(exp.amount))}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button size="sm" variant="outline" asChild>

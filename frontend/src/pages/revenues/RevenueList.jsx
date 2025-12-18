@@ -47,18 +47,8 @@ const parseMoney = (v) => {
   return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
 };
 
-// Heurística: se vier inteiro e múltiplo de 100 (centavos), divide por 100
-const normalizeAmountForDisplay = (v) => {
-  const num = parseMoney(v);
-  if (!Number.isInteger(num)) return num;
-  const looksLikeCents = num % 100 === 0 && num >= 100 && num <= 100000000;
-  return looksLikeCents ? num / 100 : num;
-};
-
 const formatCurrency = (v) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-    normalizeAmountForDisplay(v)
-  );
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseMoney(v));
 
 // Extrai ano/mês de revenue_date (preferido) ou fallback para Date
 const getRevenueYearMonth = (rev) => {

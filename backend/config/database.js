@@ -6,7 +6,9 @@ const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'rmb_transportes'
+  database: process.env.DB_NAME || 'rmb_transportes',
+  // Mantém datas como strings para evitar problemas de timezone
+  dateStrings: true
 };
 
 // Criar pool de conexões
