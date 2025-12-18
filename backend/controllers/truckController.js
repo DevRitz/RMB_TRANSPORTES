@@ -40,13 +40,13 @@ exports.getTruckById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const results = await Truck.findById(id);
+    const truck = await Truck.findById(id);
     
-    if (results.length === 0) {
+    if (!truck) {
       return res.status(404).json({ error: 'Caminhão não encontrado' });
     }
     
-    res.json(results[0]);
+    res.json(truck);
   } catch (err) {
     console.error('Erro ao buscar caminhão:', err);
     res.status(500).json({ error: 'Erro interno do servidor' });
