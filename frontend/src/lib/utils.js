@@ -16,16 +16,15 @@ export function formatCurrency(value) {
 }
 
 /**
- * Converte um número para formato de input com máscara (multiplica por 100 e formata)
- * Ex: 5.75 -> "575" -> currencyMask -> "5,75"
+ * Converte um número do banco para formato exibição simples
+ * Ex: 19669.00 -> "19.669,00" (sem multiplicar por 100)
  */
 export function toMaskedInput(value) {
   if (value == null || value === '') return '';
   const num = typeof value === 'number' ? value : parseFloat(String(value));
   if (!Number.isFinite(num)) return '';
-  // Multiplica por 100 e formata
-  const cents = Math.round(num * 100);
-  return currencyMask(String(cents));
+  // Formata direto sem conversão
+  return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 /**
@@ -47,7 +46,7 @@ export function currencyMask(value) {
 }
 
 /**
- * Remove a máscara de moeda e retorna o número (ex: "1.234,56" -> 1234.56)
+ * Remove a máscara de moeda e retorna o número (ex: "19.669,00" -> 19669.00)
  */
 export function parseCurrency(value) {
   if (value == null || value === '') return 0;
