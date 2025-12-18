@@ -44,6 +44,9 @@ const parseMoney = (v) => {
   if (v == null) return 0;
   if (typeof v === 'number') return v;
   const s = String(v).trim();
+  // Se já está em formato inglês (dot como decimal), usa direto
+  if (/^-?\d+(\.\d+)?$/.test(s)) return parseFloat(s) || 0;
+  // Senão, converte formato brasileiro (1.234,56 -> 1234.56)
   return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
 };
 

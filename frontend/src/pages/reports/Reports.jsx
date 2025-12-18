@@ -44,8 +44,10 @@ const num = (v) => {
   if (v == null) return 0;
   if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
   const s = String(v).trim();
-  if (/^-?\d+(\.\d+)?$/.test(s)) return parseFloat(s); // "1234.56"
-  const normalized = s.replace(/\./g, '').replace(',', '.'); // "1.234,56" -> "1234.56"
+  // Se já está em formato inglês (apenas dígitos com um ponto decimal), usa direto
+  if (/^-?\d+(\.\d+)?$/.test(s)) return parseFloat(s) || 0;
+  // Senão, converte formato brasileiro (1.234,56 -> 1234.56)
+  const normalized = s.replace(/\./g, '').replace(',', '.');
   const x = Number.parseFloat(normalized);
   return Number.isFinite(x) ? x : 0;
 };
